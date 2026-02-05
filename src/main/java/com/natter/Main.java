@@ -1,12 +1,24 @@
 package com.natter;
 
-import static spark.Spark.get;
-import static spark.Spark.port;
+import org.dalesbred.Database;
+import org.h2.jdbcx.JdbcConnectionPool;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 public class Main {
-	public static void main(String[] args) {
-		port(4567);
-		get("/hello", (req, res) -> "Welcome to the world of API Security!");
-		System.out.println("Server started on http://localhost:4567");
+	public static void main(String[] args) throws URISyntaxException, IOException {
+		JdbcConnectionPool jdbcConnectionPool = JdbcConnectionPool.create("jdbc:h2:mem:natter", "natter", "password");
+		Database database = Database.forDataSource(jdbcConnectionPool);
+		createTables(database);
+	}
+
+	private static void createTables(Database database) throws URISyntaxException, IOException {
+		Path path = Paths.get(Objects.requireNonNull(Main.class.getResource("/schema.sql")).toURI());
+		database.update(Files.readString(path));
 	}
 }
